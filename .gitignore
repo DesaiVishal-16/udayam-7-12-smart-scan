@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+/uploads/
+
+# Temp
+*.tmp
+*.temp
+config.bat
