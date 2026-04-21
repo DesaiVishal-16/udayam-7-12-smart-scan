@@ -72,7 +72,7 @@ app.get("/api/records", (req, res) => {
       query += " AND village = ?";
       params.push(village);
     }
-    if (landType) {
+    if (landType && landType !== "all") {
       query += " AND landType LIKE ?";
       params.push(`%${landType}%`);
     }
