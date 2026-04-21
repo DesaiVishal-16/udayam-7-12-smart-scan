@@ -35,7 +35,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [villageFilter, setVillageFilter] = useState("");
-  const [landTypeFilter, setLandTypeFilter] = useState("");
+  const [landTypeFilter, setLandTypeFilter] = useState("all");
   const [previewFile, setPreviewFile] = useState<LandRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -175,13 +175,13 @@ export default function HistoryPage() {
                onChange={(e) => setLandTypeFilter(e.target.value)}
                className="w-full bg-slate-50 border-none rounded-lg py-2.5 pl-10 pr-10 text-[11px] font-bold uppercase tracking-widest text-slate-500 appearance-none focus:ring-1 focus:ring-slate-gold transition-all outline-none"
              >
-                <option value="">Holding: All</option>
-                <option value="भोगवटादार वर्ग -1">भोगवटादार वर्ग -1</option>
-                <option value="भोगवटादार वर्ग -2">भोगवटादार वर्ग -2</option>
+<option value="all">Holding: All</option>
+                 <option value="भोगवटादार वर्ग -1">भोगवटादार वर्ग -1</option>
+                 <option value="भोगवटादार वर्ग -2">भोगवटादार वर्ग -2</option>
              </select>
           </div>
           <button 
-            onClick={() => { setSearch(""); setVillageFilter(""); setLandTypeFilter(""); }}
+            onClick={() => { setSearch(""); setVillageFilter(""); setLandTypeFilter("all"); }}
             className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-gold transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
