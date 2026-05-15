@@ -1,3 +1,12 @@
+export interface ExtractionTable {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface ExtractionResult {
+  tables: ExtractionTable[];
+}
+
 export interface LandRecord {
   id: string;
   fileName: string;
@@ -10,8 +19,4 @@ export interface LandRecord {
   mutationNumber: number;
   confidence: number;
   createdAt?: string;
-}
-
-export interface ExtractionResult extends Omit<LandRecord, 'id' | 'filePath' | 'createdAt'> {
-  // Utility for temporary extraction state
 }

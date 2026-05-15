@@ -27,13 +27,15 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 import { motion, AnimatePresence } from "motion/react";
 import { useDropzone } from "react-dropzone";
 import { extractLandRecord } from "../lib/gemini";
-import { LandRecord } from "../types";
-import * as XLSX from "xlsx";
+import { LandRecord, ExtractionResult } from "../types";
+import { exportExtractionToExcel } from "../lib/excel";
+import ResultsPreview from "./ResultsPreview";
 import { cn } from "../lib/utils";
 
 export default function Dashboard() {
   const [files, setFiles] = useState<File[]>([]);
   const [extractedRecords, setExtractedRecords] = useState<(LandRecord & { isDirty?: boolean })[]>([]);
+  const [extractionResults, setExtractionResults] = useState<ExtractionResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [previewFile, setPreviewFile] = useState<LandRecord | null>(null);
@@ -48,6 +50,7 @@ export default function Dashboard() {
 
   const startNewBatch = () => {
     setExtractedRecords([]);
+    setExtractionResults([]);
     setFiles([]);
     addNotification('success', 'Terminal reset: Ready for new batch');
   };
@@ -123,18 +126,27 @@ export default function Dashboard() {
 
                 const [uploadData, extraction] = await Promise.all([uploadPromise, extractionPromise]);
                 const { filePath, fileName } = uploadData;
-                
+
+                setExtractionResults(prev => [...prev, extraction]);
+
+                const firstRow = extraction.tables?.[0]?.rows?.[0] || [];
+                const headers = extraction.tables?.[0]?.headers || [];
+                const getCol = (name: string) => {
+                  const idx = headers.indexOf(name);
+                  return idx !== -1 ? firstRow[idx] || "" : "";
+                };
+
                 const record: LandRecord = {
                     id: Math.random().toString(36).substr(2, 9),
                     fileName,
                     filePath,
-                    landType: extraction.landType || "Unknown",
-                    village: extraction.village || "Unknown",
-                    taluka: extraction.taluka || "Unknown",
-                    district: extraction.district || "Unknown",
-                    area: extraction.area || "Unknown",
-                    mutationNumber: extraction.mutationNumber || 0,
-                    confidence: extraction.confidence || 0
+                    landType: getCol("भू-धारणा पद्धती") || "Unknown",
+                    village: getCol("गाव") || "Unknown",
+                    taluka: getCol("तालुका") || "Unknown",
+                    district: getCol("जिल्हा") || "Unknown",
+                    area: getCol("Total Area (क्षेत्र)") || "Unknown",
+                    mutationNumber: parseInt(getCol("शेवटचा फेरफार क्रमांक")) || 0,
+                    confidence: 0.9
                 };
                 
                 newRecords.push({ ...record, isDirty: false });
@@ -203,21 +215,15 @@ export default function Dashboard() {
   };
 
   const exportToExcel = () => {
-    if (extractedRecords.length === 0) return;
-    const worksheet = XLSX.utils.json_to_sheet(extractedRecords.map(r => ({
-      'Date': new Date().toLocaleDateString(),
-      'File Name': r.fileName,
-      'भू-धारणा पद्धती': r.landType,
-      'गाव': r.village,
-      'तालुका': r.taluka,
-      'जिल्हा': r.district,
-      'क्षेत्र (Area)': r.area,
-      'फेरफार क्रमांक': r.mutationNumber,
-      'Confidence': `${(r.confidence * 100).toFixed(1)}%`
-    })));
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Extraction Results");
-    XLSX.writeFile(workbook, `Maharashtra_Land_Records_${Date.now()}.xlsx`);
+    if (extractionResults.length === 0) return;
+    const merged: ExtractionResult = { tables: [] };
+    for (const r of extractionResults) {
+      if (r.tables?.length) {
+        merged.tables.push(...r.tables);
+      }
+    }
+    if (merged.tables.length === 0) return;
+    exportExtractionToExcel(merged, `Maharashtra_Land_Records_${Date.now()}.xlsx`);
   };
 
   return (
@@ -229,7 +235,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            disabled={extractedRecords.length === 0}
+            disabled={extractionResults.length === 0}
             onClick={exportToExcel}
             className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-slate-50 shadow-sm transition-all disabled:opacity-50 text-xs uppercase tracking-widest"
           >
@@ -339,7 +345,13 @@ export default function Dashboard() {
 
         {/* Results Section */}
         <div className="lg:col-span-2 space-y-6">
-          {extractedRecords.length > 0 ? (
+          {extractionResults.length > 0 ? (
+            <div className="space-y-4">
+              {extractionResults.map((result, idx) => (
+                <ResultsPreview key={idx} result={result} />
+              ))}
+            </div>
+          ) : extractedRecords.length > 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Resulting Extractions ({extractedRecords.length})</h3>
