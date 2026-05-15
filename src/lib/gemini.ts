@@ -40,6 +40,7 @@ function generatePrompt(): string {
     if (i === 6) return '"1 हे 23 आर"';
     if (i === 7) return '"123"';
     if (c === "कुळ") return '"YES"';
+    if (c === "इनाम") return '"YES"';
     return '"NO"';
   }).join(", ");
 
@@ -51,8 +52,8 @@ CRITICAL INSTRUCTIONS:
 1. Return a SINGLE table (not one per page) with exactly 30 columns.
 2. Use the exact column headers below — do NOT add, remove, or rename any column.
 3. Each row represents ONE distinct survey entry (NOT one row per land type).
-4. Document-level fields (Date, File Name, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must be the SAME across all rows.
-5. For the 22 land type/right columns (सीलिंग through तगाई), use ONLY "YES" or "NO" — no names, no survey numbers, no area values.
+4. The first 8 columns (Date, File Name, भू-धारणा पद्धती, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must contain actual extracted data values and be the SAME across all rows.
+5. For the remaining 22 columns (सीलिंग through तगाई), look at the document and determine if each specific land type or right is present. If the document shows/mentions that particular land type or right, put "YES". If it does NOT appear anywhere in the document, put "NO". Do NOT put land owner names, survey numbers, or area values in these columns — ONLY "YES" or "NO".
 6. Never leave cells empty — use "NO" when inapplicable.
 7. Never duplicate rows.
 
