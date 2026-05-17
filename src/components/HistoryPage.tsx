@@ -5,6 +5,8 @@ import {
   Calendar, 
   MapPin, 
   Eye, 
+  Pencil, 
+  Save,
   Trash2, 
   FileDown, 
   Download,
@@ -36,6 +38,8 @@ export default function HistoryPage() {
   const [search, setSearch] = useState("");
   const [villageFilter, setVillageFilter] = useState("");
   const [landTypeFilter, setLandTypeFilter] = useState("all");
+  const [editData, setEditData] = useState<Partial<LandRecord>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<LandRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -121,6 +125,36 @@ export default function HistoryPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Full Archive");
     XLSX.writeFile(workbook, `Maharashtra_History_Export_${Date.now()}.xlsx`);
+  };
+
+  const startEdit = (record: LandRecord) => {
+    setEditingId(record.id);
+    setEditData({ ...record });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
+  const updateEditField = (field: keyof LandRecord, value: string | number) => {
+    setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editData.id) return;
+    try {
+      const res = await fetch("/api/records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ ...editData, isNew: false })
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setRecords(prev => prev.map(r => r.id === editingId ? { ...r, ...editData } as LandRecord : r));
+      cancelEdit();
+    } catch (error) {
+      console.error("Edit save failed:", error);
+    }
   };
 
   const uniqueVillages = Array.from(new Set(records.map(r => r.village))).filter(Boolean);
@@ -231,43 +265,127 @@ export default function HistoryPage() {
                                     </div>
                                 </td>
                                 <td className="px-8 py-5">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-xs text-slate-900 flex items-center gap-2">
-                                            {record.village}
-                                            <span className="bg-[#E7F3E5] text-[#2E5C31] text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest">Verified</span>
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{record.taluka} / {record.district}</span>
-                                    </div>
+                                    {editingId === record.id ? (
+                                        <div className="flex flex-col gap-2">
+                                            <input
+                                                value={editData.village || ""}
+                                                onChange={(e) => updateEditField('village', e.target.value)}
+                                                className="font-bold text-xs text-slate-900 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-full"
+                                            />
+                                            <div className="flex gap-1">
+                                                <input
+                                                    value={editData.taluka || ""}
+                                                    onChange={(e) => updateEditField('taluka', e.target.value)}
+                                                    className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-1/2"
+                                                    placeholder="Taluka"
+                                                />
+                                                <input
+                                                    value={editData.district || ""}
+                                                    onChange={(e) => updateEditField('district', e.target.value)}
+                                                    className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-1/2"
+                                                    placeholder="District"
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-xs text-slate-900 flex items-center gap-2">
+                                                {record.village}
+                                                <span className="bg-[#E7F3E5] text-[#2E5C31] text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest">Verified</span>
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{record.taluka} / {record.district}</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-8 py-5">
-                                    <span className="text-xs font-bold text-emerald-600">{record.area}</span>
+                                    {editingId === record.id ? (
+                                        <input
+                                            value={editData.area || ""}
+                                            onChange={(e) => updateEditField('area', e.target.value)}
+                                            className="text-xs font-bold text-emerald-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-full"
+                                        />
+                                    ) : (
+                                        <span className="text-xs font-bold text-emerald-600">{record.area}</span>
+                                    )}
                                 </td>
                                 <td className="px-8 py-5">
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center gap-2">
-                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Type:</span>
-                                             <span className="text-[10px] font-semibold text-slate-600 uppercase">{record.landType}</span>
+                                    {editingId === record.id ? (
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Type:</span>
+                                                <input
+                                                    value={editData.landType || ""}
+                                                    onChange={(e) => updateEditField('landType', e.target.value)}
+                                                    className="text-[10px] font-semibold text-slate-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 flex-1"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mutation:</span>
+                                                <input
+                                                    type="number"
+                                                    value={editData.mutationNumber || 0}
+                                                    onChange={(e) => updateEditField('mutationNumber', parseInt(e.target.value))}
+                                                    className="text-[10px] font-bold text-amber-500 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-24"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mutation:</span>
-                                             <span className="text-[10px] font-bold text-slate-gold">#{record.mutationNumber}</span>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-2">
+                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Type:</span>
+                                                 <span className="text-[10px] font-semibold text-slate-600 uppercase">{record.landType}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mutation:</span>
+                                                 <span className="text-[10px] font-bold text-amber-500">#{record.mutationNumber}</span>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </td>
                                 <td className="px-8 py-5">
                                     <div className="flex items-center justify-center gap-2">
                                         <button 
                                             onClick={() => window.open(record.filePath, '_blank')}
-                                            className="p-1.5 text-slate-400 hover:text-slate-gold"
+                                            className="p-1.5 text-slate-400 hover:text-amber-500"
+                                            title="View PDF"
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
-                                        <button 
-                                            onClick={() => setDeleteId(record.id)}
-                                            className="p-1.5 text-slate-400 hover:text-red-500"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        {editingId === record.id ? (
+                                            <>
+                                                <button 
+                                                    onClick={saveEdit}
+                                                    className="p-1.5 text-emerald-600 hover:scale-110 transition-transform"
+                                                    title="Save Changes"
+                                                >
+                                                    <Save className="w-4 h-4" />
+                                                </button>
+                                                <button 
+                                                    onClick={cancelEdit}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500"
+                                                    title="Cancel"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button 
+                                                    onClick={() => startEdit(record)}
+                                                    className="p-1.5 text-slate-400 hover:text-amber-500"
+                                                    title="Edit Record"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => setDeleteId(record.id)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500"
+                                                    title="Delete Record"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </motion.tr>

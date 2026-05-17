@@ -5,6 +5,7 @@ import {
   Trash2, 
   Save, 
   Eye, 
+  Pencil, 
   FileDown, 
   AlertCircle, 
   CheckCircle2,
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [extractionResults, setExtractionResults] = useState<ExtractionResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<LandRecord | null>(null);
   const [zoom, setZoom] = useState(1);
   const [numPages, setNumPages] = useState<number>(0);
@@ -214,6 +216,10 @@ export default function Dashboard() {
     setExtractedRecords(prev => prev.filter(r => r.id !== id));
   };
 
+  const toggleEdit = (id: string) => {
+    setEditingId(prev => prev === id ? null : id);
+  };
+
   const exportToExcel = () => {
     if (extractionResults.length === 0) return;
     const merged: ExtractionResult = { tables: [] };
@@ -388,7 +394,13 @@ export default function Dashboard() {
                                                 <input 
                                                     value={record.village}
                                                     onChange={(e) => updateField(record.id, 'village', e.target.value)}
-                                                    className="font-bold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-border-slate-200 focus:border-amber-500 outline-none w-full"
+                                                    disabled={editingId !== record.id}
+                                                    className={cn(
+                                                        "font-bold text-sm text-slate-900 bg-transparent border-b outline-none w-full",
+                                                        editingId === record.id 
+                                                            ? "border-amber-300 focus:border-amber-500" 
+                                                            : "border-transparent"
+                                                    )}
                                                 />
                                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{record.taluka} / {record.district}</span>
                                             </div>
@@ -397,14 +409,26 @@ export default function Dashboard() {
                                             <input 
                                                 value={record.area}
                                                 onChange={(e) => updateField(record.id, 'area', e.target.value)}
-                                                className="text-xs font-bold text-emerald-600 bg-transparent border-b border-transparent hover:border-border-slate-200 focus:border-amber-500 outline-none w-full"
+                                                disabled={editingId !== record.id}
+                                                className={cn(
+                                                    "text-xs font-bold text-emerald-600 bg-transparent border-b outline-none w-full",
+                                                    editingId === record.id 
+                                                        ? "border-amber-300 focus:border-amber-500" 
+                                                        : "border-transparent"
+                                                )}
                                             />
                                         </td>
                                         <td className="px-6 py-4">
                                             <input 
                                                 value={record.landType}
                                                 onChange={(e) => updateField(record.id, 'landType', e.target.value)}
-                                                className="text-xs text-slate-600 bg-transparent border-b border-transparent hover:border-border-slate-200 focus:border-amber-500 outline-none w-full font-medium"
+                                                disabled={editingId !== record.id}
+                                                className={cn(
+                                                    "text-xs text-slate-600 bg-transparent border-b outline-none w-full font-medium",
+                                                    editingId === record.id 
+                                                        ? "border-amber-300 focus:border-amber-500" 
+                                                        : "border-transparent"
+                                                )}
                                             />
                                         </td>
                                         <td className="px-6 py-4 font-mono">
@@ -412,7 +436,13 @@ export default function Dashboard() {
                                                 type="number"
                                                 value={record.mutationNumber}
                                                 onChange={(e) => updateField(record.id, 'mutationNumber', parseInt(e.target.value))}
-                                                className="bg-transparent border-b border-transparent hover:border-border-slate-200 focus:border-amber-500 outline-none w-16 font-bold text-amber-500"
+                                                disabled={editingId !== record.id}
+                                                className={cn(
+                                                    "bg-transparent border-b outline-none w-16 font-bold text-amber-500",
+                                                    editingId === record.id 
+                                                        ? "border-amber-300 focus:border-amber-500" 
+                                                        : "border-transparent"
+                                                )}
                                             />
                                         </td>
                                         <td className="px-6 py-4">
@@ -430,13 +460,23 @@ export default function Dashboard() {
                                                 <button 
                                                     onClick={() => window.open(record.filePath, '_blank')}
                                                     className="p-1.5 text-slate-400 hover:text-amber-500"
-                                                    title="View Source"
+                                                    title="View PDF"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                {record.isDirty && (
+                                                <button 
+                                                    onClick={() => toggleEdit(record.id)}
+                                                    className={cn(
+                                                        "p-1.5 transition-colors",
+                                                        editingId === record.id ? "text-amber-500" : "text-slate-400 hover:text-amber-500"
+                                                    )}
+                                                    title={editingId === record.id ? "Done Editing" : "Edit Record"}
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                {record.isDirty && editingId === record.id && (
                                                     <button 
-                                                        onClick={() => handleSaveRecord(record)}
+                                                        onClick={() => { handleSaveRecord(record); setEditingId(null); }}
                                                         className="p-1.5 text-amber-500 hover:scale-110 transition-transform"
                                                         title="Commit Changes"
                                                     >
@@ -446,7 +486,7 @@ export default function Dashboard() {
                                                 <button 
                                                     onClick={() => deleteCurrentRecord(record.id)}
                                                     className="p-1.5 text-slate-400 hover:text-red-500"
-                                                    title="Discard"
+                                                    title="Delete Record"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
