@@ -49,13 +49,20 @@ function generatePrompt(): string {
 Analyze this Maharashtra 7/12 (Satbara) document and extract a structured table.
 
 CRITICAL INSTRUCTIONS:
-1. Return a SINGLE table (not one per page) with exactly 30 columns.
-2. Use the exact column headers below — do NOT add, remove, or rename any column.
-3. Each row represents ONE distinct survey entry (NOT one row per land type).
-4. The first 8 columns (Date, File Name, भू-धारणा पद्धती, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must contain actual extracted data values and be the SAME across all rows.
-5. For the remaining 22 columns (सीलिंग through तगाई), look at the document and determine if each specific land type or right is present. If the document shows/mentions that particular land type or right, put "YES". If it does NOT appear anywhere in the document, put "NO". Do NOT put land owner names, survey numbers, or area values in these columns — ONLY "YES" or "NO".
-6. Never leave cells empty — use "NO" when inapplicable.
-7. Never duplicate rows.
+1. ACCURACY IS PARAMOUNT: Extract Marathi text EXACTLY as written in the document. Pay special attention to:
+   - Village names (गाव): extract exactly, verify spelling
+   - Taluka (तालुका): extract exactly
+   - District (जिल्हा): extract exactly
+   - Land type (भू-धारणा पद्धती): like "भोगवटादार वर्ग १" or "भोगवटादार वर्ग २"
+   - Area (क्षेत्र): like "1 हे 23 आर" or "24 चौ. मी."
+2. Return a SINGLE table (not one per page) with exactly 30 columns.
+3. Use the exact column headers below — do NOT add, remove, or rename any column.
+4. Each row represents ONE distinct survey entry (NOT one row per land type).
+5. The first 8 columns (Date, File Name, भू-धारणा पद्धती, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must contain actual extracted data values and be the SAME across all rows.
+6. For the remaining 22 columns (सीलिंग through तगाई), look at the document and determine if each specific land type or right is present. If the document shows/mentions that particular land type or right, put "YES". If it does NOT appear anywhere in the document, put "NO". Do NOT put land owner names, survey numbers, or area values in these columns — ONLY "YES" or "NO".
+7. Never leave cells empty — use "NO" when inapplicable.
+8. Never duplicate rows.
+9. If you are unsure about any Marathi text, try your best to match the characters as closely as possible.
 
 The 30 columns in order are:
 ${columns}
@@ -137,14 +144,19 @@ export async function extractLandRecord(file: File): Promise<{ tables: { headers
 
     let response;
     try {
-      response = await extractWithModel("gemini-3.1-pro-preview", false);
+      response = await extractWithModel("gemini-2.0-flash-exp", false);
     } catch (error: any) {
-      const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
-      if (isQuotaError) {
-        console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model with optimized thinking...");
-        response = await extractWithModel("gemini-3-flash-preview", true);
-      } else {
-        throw error;
+      console.warn("[AI Extraction] gemini-2.0-flash-exp failed, trying gemini-3.1-pro-preview...");
+      try {
+        response = await extractWithModel("gemini-3.1-pro-preview", false);
+      } catch (error2: any) {
+        const isQuotaError = error2.message?.includes("Quota exceeded") || error2.status === 429 || error2.message?.includes("429");
+        if (isQuotaError) {
+          console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model...");
+          response = await extractWithModel("gemini-2.0-flash-exp", true);
+        } else {
+          throw error2;
+        }
       }
     }
 
