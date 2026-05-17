@@ -365,7 +365,7 @@ export default function Dashboard() {
                   key={idx}
                   result={result}
                   filePath={resultFilePaths[idx]}
-                  onEditRow={(ri) => {
+                  onEditRow={async (ri) => {
                     const row = result.tables?.[0]?.rows?.[ri];
                     const headers = result.tables?.[0]?.headers || [];
                     if (!row) return;
@@ -385,8 +385,17 @@ export default function Dashboard() {
                       mutationNumber: 0,
                       confidence: 0.9
                     };
-                    setExtractedRecords(prev => [{ ...record, isDirty: true }, ...prev]);
-                    setEditingId(record.id);
+                    await fetch("/api/records", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                      body: JSON.stringify({ ...record, isNew: true })
+                    });
+                    // Remove the row from extraction results
+                    const newResults = extractionResults.map((r, i) =>
+                      i === idx ? { ...r, tables: r.tables.map((t, ti) => ti === 0 ? { ...t, rows: t.rows.filter((_, rri) => rri !== ri) } : t) } : r
+                    );
+                    setExtractionResults(newResults);
+                    addNotification('success', `Saved record for ${record.village}`);
                   }}
                   onDeleteRow={(ri) => {
                     const newResults = extractionResults.map((r, i) =>
