@@ -69,7 +69,9 @@ export default function Dashboard() {
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles(prev => [...prev, ...acceptedFiles]);
+    if (acceptedFiles.length > 0) {
+      setFiles(prev => [...prev, ...acceptedFiles]);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -97,12 +99,11 @@ export default function Dashboard() {
     
     // Process files in batches to respect rate limits while maintaining speed
     const BATCH_SIZE = 2; 
-    let completedCount = 0;
 
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
         const batch = files.slice(i, i + BATCH_SIZE);
         
-        await Promise.all(batch.map(async (file) => {
+        await Promise.all(batch.map(async (file, batchIdx) => {
             try {
                 // RUN UPLOAD AND EXTRACTION IN PARALLEL for the same file
                 // This eliminates the sequential wait time.
@@ -163,8 +164,8 @@ export default function Dashboard() {
                 const msg = error instanceof Error ? error.message : `System failure processing ${file.name}`;
                 addNotification('error', msg);
             } finally {
-                completedCount++;
-                setProgress({ current: completedCount, total: files.length });
+                const completed = i + batchIdx + 1;
+                setProgress({ current: completed, total: files.length });
             }
         }));
     }
