@@ -147,7 +147,7 @@ export default function Dashboard() {
                     taluka: getCol("तालुका") || "Unknown",
                     district: getCol("जिल्हा") || "Unknown",
                     area: getCol("Total Area (क्षेत्र)") || "Unknown",
-                    mutationNumber: parseInt(getCol("शेवटचा फेरफार क्रमांक")) || 0,
+                    mutationNumber: 0,
                     confidence: 0.9
                 };
                 
@@ -344,7 +344,7 @@ export default function Dashboard() {
             <ul className="text-[11px] space-y-2 text-slate-500 font-medium leading-relaxed">
                 <li className="flex gap-2"><span>●</span> Ensure images are high resolution and well-lit.</li>
                 <li className="flex gap-2"><span>●</span> Include the entire document structure if possible.</li>
-                <li className="flex gap-2"><span>●</span> System supports both handwritten and printed mutation numbers.</li>
+                
             </ul>
           </div>
         </div>
@@ -373,7 +373,6 @@ export default function Dashboard() {
                                 <th className="px-6 py-4">Village Origin</th>
                                 <th className="px-6 py-4">Total Area (क्षेत्र)</th>
                                 <th className="px-6 py-4">Holding Status</th>
-                                <th className="px-6 py-4">Mutation #</th>
                                 <th className="px-6 py-4">Record Match</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
@@ -425,20 +424,6 @@ export default function Dashboard() {
                                                 disabled={editingId !== record.id}
                                                 className={cn(
                                                     "text-xs text-slate-600 bg-transparent border-b outline-none w-full font-medium",
-                                                    editingId === record.id 
-                                                        ? "border-amber-300 focus:border-amber-500" 
-                                                        : "border-transparent"
-                                                )}
-                                            />
-                                        </td>
-                                        <td className="px-6 py-4 font-mono">
-                                             <input 
-                                                type="number"
-                                                value={record.mutationNumber}
-                                                onChange={(e) => updateField(record.id, 'mutationNumber', parseInt(e.target.value))}
-                                                disabled={editingId !== record.id}
-                                                className={cn(
-                                                    "bg-transparent border-b outline-none w-16 font-bold text-amber-500",
                                                     editingId === record.id 
                                                         ? "border-amber-300 focus:border-amber-500" 
                                                         : "border-transparent"

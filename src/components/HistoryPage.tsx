@@ -119,7 +119,6 @@ export default function HistoryPage() {
       'तालुका': r.taluka,
       'जिल्हा': r.district,
       'क्षेत्र (Area)': r.area,
-      'फेरफार क्रमांक': r.mutationNumber,
       'Confidence': `${((r.confidence || 0) * 100).toFixed(1)}%`
     })));
     const workbook = XLSX.utils.book_new();
@@ -310,35 +309,18 @@ export default function HistoryPage() {
                                 </td>
                                 <td className="px-8 py-5">
                                     {editingId === record.id ? (
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Type:</span>
-                                                <input
-                                                    value={editData.landType || ""}
-                                                    onChange={(e) => updateEditField('landType', e.target.value)}
-                                                    className="text-[10px] font-semibold text-slate-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 flex-1"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mutation:</span>
-                                                <input
-                                                    type="number"
-                                                    value={editData.mutationNumber || 0}
-                                                    onChange={(e) => updateEditField('mutationNumber', parseInt(e.target.value))}
-                                                    className="text-[10px] font-bold text-amber-500 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-24"
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Type:</span>
+                                            <input
+                                                value={editData.landType || ""}
+                                                onChange={(e) => updateEditField('landType', e.target.value)}
+                                                className="text-[10px] font-semibold text-slate-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 flex-1"
+                                            />
                                         </div>
                                     ) : (
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-2">
-                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Type:</span>
-                                                 <span className="text-[10px] font-semibold text-slate-600 uppercase">{record.landType}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mutation:</span>
-                                                 <span className="text-[10px] font-bold text-amber-500">#{record.mutationNumber}</span>
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Type:</span>
+                                             <span className="text-[10px] font-semibold text-slate-600 uppercase">{record.landType}</span>
                                         </div>
                                     )}
                                 </td>
