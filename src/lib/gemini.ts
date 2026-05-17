@@ -144,19 +144,14 @@ export async function extractLandRecord(file: File): Promise<{ tables: { headers
 
     let response;
     try {
-      response = await extractWithModel("gemini-2.0-flash-exp", false);
+      response = await extractWithModel("gemini-3.1-pro-preview", false);
     } catch (error: any) {
-      console.warn("[AI Extraction] gemini-2.0-flash-exp failed, trying gemini-3.1-pro-preview...");
-      try {
-        response = await extractWithModel("gemini-3.1-pro-preview", false);
-      } catch (error2: any) {
-        const isQuotaError = error2.message?.includes("Quota exceeded") || error2.status === 429 || error2.message?.includes("429");
-        if (isQuotaError) {
-          console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model...");
-          response = await extractWithModel("gemini-2.0-flash-exp", true);
-        } else {
-          throw error2;
-        }
+      const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
+      if (isQuotaError) {
+        console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model...");
+        response = await extractWithModel("gemini-2.0-flash", true);
+      } else {
+        throw error;
       }
     }
 
