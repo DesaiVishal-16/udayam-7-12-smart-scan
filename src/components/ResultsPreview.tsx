@@ -16,6 +16,13 @@ const ResultsPreview: React.FC<Props> = ({ result, filePath, onEditRow, onDelete
   const rowCount = table.rows.length;
   const colCount = table.headers.length;
 
+  const getCellClass = (cell: string) => {
+    const trimmed = cell.trim().toUpperCase();
+    if (trimmed === "YES") return "px-4 py-2 text-xs font-bold text-red-600 bg-red-50 rounded";
+    if (trimmed === "NO") return "px-4 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 rounded";
+    return "px-4 py-2 text-xs text-slate-600 whitespace-nowrap";
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
@@ -40,7 +47,7 @@ const ResultsPreview: React.FC<Props> = ({ result, filePath, onEditRow, onDelete
             {table.rows.map((row, ri) => (
               <tr key={ri} className="hover:bg-slate-50 transition-colors">
                 {row.map((cell, ci) => (
-                  <td key={ci} className="px-4 py-2 text-xs text-slate-600 whitespace-nowrap">{cell}</td>
+                  <td key={ci} className={getCellClass(cell)}>{cell}</td>
                 ))}
                 <td className="px-4 py-2">
                   <div className="flex items-center justify-center gap-1">
