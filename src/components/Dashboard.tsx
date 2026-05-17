@@ -365,37 +365,12 @@ export default function Dashboard() {
                   key={idx}
                   result={result}
                   filePath={resultFilePaths[idx]}
-                  onEditRow={async (ri) => {
-                    const row = result.tables?.[0]?.rows?.[ri];
-                    const headers = result.tables?.[0]?.headers || [];
-                    if (!row) return;
-                    const getCol = (name: string) => {
-                      const ci = headers.indexOf(name);
-                      return ci !== -1 ? row[ci] || "" : "";
-                    };
-                    const record: LandRecord = {
-                      id: Math.random().toString(36).substr(2, 9),
-                      fileName: "",
-                      filePath: resultFilePaths[idx] || "",
-                      landType: getCol("भू-धारणा पद्धती") || "Unknown",
-                      village: getCol("गाव") || "Unknown",
-                      taluka: getCol("तालुका") || "Unknown",
-                      district: getCol("जिल्हा") || "Unknown",
-                      area: getCol("Total Area (क्षेत्र)") || "Unknown",
-                      mutationNumber: 0,
-                      confidence: 0.9
-                    };
-                    await fetch("/api/records", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                      body: JSON.stringify({ ...record, isNew: true })
-                    });
-                    // Remove the row from extraction results
+                  onEditRow={(ri, newRow) => {
                     const newResults = extractionResults.map((r, i) =>
-                      i === idx ? { ...r, tables: r.tables.map((t, ti) => ti === 0 ? { ...t, rows: t.rows.filter((_, rri) => rri !== ri) } : t) } : r
+                      i === idx ? { ...r, tables: r.tables.map((t, ti) => ti === 0 ? { ...t, rows: t.rows.map((row, rri) => rri === ri ? newRow : row) } : t) } : r
                     );
                     setExtractionResults(newResults);
-                    addNotification('success', `Saved record for ${record.village}`);
+                    addNotification('success', 'Row updated');
                   }}
                   onDeleteRow={(ri) => {
                     const newResults = extractionResults.map((r, i) =>
