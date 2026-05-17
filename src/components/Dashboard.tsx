@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [files, setFiles] = useState<File[]>([]);
   const [extractedRecords, setExtractedRecords] = useState<(LandRecord & { isDirty?: boolean })[]>([]);
   const [extractionResults, setExtractionResults] = useState<ExtractionResult[]>([]);
+  const [resultFilePaths, setResultFilePaths] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export default function Dashboard() {
   const startNewBatch = () => {
     setExtractedRecords([]);
     setExtractionResults([]);
+    setResultFilePaths([]);
     setFiles([]);
     addNotification('success', 'Terminal reset: Ready for new batch');
   };
@@ -90,6 +92,8 @@ export default function Dashboard() {
     setProgress({ current: 0, total: files.length });
 
     const newRecords: (LandRecord & { isDirty: boolean })[] = [];
+    const newResults: ExtractionResult[] = [];
+    const newResultPaths: string[] = [];
     
     // Process files in batches to respect rate limits while maintaining speed
     const BATCH_SIZE = 2; 
@@ -129,7 +133,8 @@ export default function Dashboard() {
                 const [uploadData, extraction] = await Promise.all([uploadPromise, extractionPromise]);
                 const { filePath, fileName } = uploadData;
 
-                setExtractionResults(prev => [...prev, extraction]);
+                newResults.push(extraction);
+                newResultPaths.push(filePath);
 
                 const firstRow = extraction.tables?.[0]?.rows?.[0] || [];
                 const headers = extraction.tables?.[0]?.headers || [];
@@ -165,6 +170,8 @@ export default function Dashboard() {
     }
 
     setExtractedRecords(prev => [...newRecords, ...prev]);
+    setExtractionResults(prev => [...prev, ...newResults]);
+    setResultFilePaths(prev => [...prev, ...newResultPaths]);
     setFiles([]);
     setProcessing(false);
     addNotification('success', `Optimized Pipeline: Processed ${newRecords.length} assets`);
@@ -351,13 +358,24 @@ export default function Dashboard() {
 
         {/* Results Section */}
         <div className="lg:col-span-2 space-y-6">
-          {extractionResults.length > 0 ? (
+          {extractionResults.length > 0 && (
             <div className="space-y-4">
               {extractionResults.map((result, idx) => (
-                <ResultsPreview key={idx} result={result} />
+                <ResultsPreview
+                  key={idx}
+                  result={result}
+                  filePath={resultFilePaths[idx]}
+                  onDeleteRow={(ri) => {
+                    const newResults = extractionResults.map((r, i) =>
+                      i === idx ? { ...r, tables: r.tables.map((t, ti) => ti === 0 ? { ...t, rows: t.rows.filter((_, rri) => rri !== ri) } : t) } : r
+                    );
+                    setExtractionResults(newResults);
+                  }}
+                />
               ))}
             </div>
-          ) : extractedRecords.length > 0 ? (
+          )}
+          {extractedRecords.length > 0 && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Resulting Extractions ({extractedRecords.length})</h3>
@@ -483,14 +501,9 @@ export default function Dashboard() {
                         </tbody>
                     </table>
                 </div>
-                {extractedRecords.length === 0 && (
-                    <div className="p-20 flex flex-col items-center justify-center text-center bg-white">
-                        <Database className="w-10 h-10 text-slate-100 mb-4" />
-                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">No Active Extractions</p>
-                    </div>
-                )}
             </div>
-          ) : (
+          )}
+          {extractionResults.length === 0 && extractedRecords.length === 0 && (
              <div className="h-full min-h-[400px] border border-border-slate-200 border-dashed rounded-xl flex flex-col items-center justify-center text-center p-12 bg-white">
                 <BarChart3 className="w-12 h-12 text-slate-100 mb-6" />
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Queue Status: Idle</h3>
