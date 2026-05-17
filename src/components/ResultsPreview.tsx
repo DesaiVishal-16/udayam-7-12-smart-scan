@@ -1,11 +1,15 @@
 import React from "react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { ExtractionResult } from "../types";
 
 interface Props {
   result: ExtractionResult;
+  filePath?: string;
+  onEditRow?: (rowIndex: number) => void;
+  onDeleteRow?: (rowIndex: number) => void;
 }
 
-const ResultsPreview: React.FC<Props> = ({ result }) => {
+const ResultsPreview: React.FC<Props> = ({ result, filePath, onEditRow, onDeleteRow }) => {
   if (!result?.tables?.length) return null;
 
   const table = result.tables[0];
@@ -29,6 +33,7 @@ const ResultsPreview: React.FC<Props> = ({ result }) => {
               {table.headers.map((header, i) => (
                 <th key={i} className="px-4 py-3 whitespace-nowrap">{header}</th>
               ))}
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
@@ -37,6 +42,37 @@ const ResultsPreview: React.FC<Props> = ({ result }) => {
                 {row.map((cell, ci) => (
                   <td key={ci} className="px-4 py-2 text-xs text-slate-600 whitespace-nowrap">{cell}</td>
                 ))}
+                <td className="px-4 py-2">
+                  <div className="flex items-center justify-center gap-1">
+                    {filePath && (
+                      <button
+                        onClick={() => window.open(filePath, '_blank')}
+                        className="p-1 text-slate-400 hover:text-amber-500"
+                        title="View PDF"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {onEditRow && (
+                      <button
+                        onClick={() => onEditRow(ri)}
+                        className="p-1 text-slate-400 hover:text-amber-500"
+                        title="Edit Row"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {onDeleteRow && (
+                      <button
+                        onClick={() => onDeleteRow(ri)}
+                        className="p-1 text-slate-400 hover:text-red-500"
+                        title="Delete Row"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
