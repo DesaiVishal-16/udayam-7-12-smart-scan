@@ -1,27 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { 
   Search, 
-  Filter, 
-  Calendar, 
-  MapPin, 
+  Filter,
   Eye, 
   Pencil, 
-  Save,
   Trash2, 
-  FileDown, 
   Download,
   AlertCircle,
-  FileText,
   X,
   RefreshCw,
   Loader2,
+  ChevronRight,
+  ChevronLeft,
   Plus,
   Minus,
-  ChevronRight,
-  ChevronLeft
+  MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { LandRecord } from "../types";
+import { LandRecord, FIXED_COLUMNS } from "../types";
 import * as XLSX from "xlsx";
 import { cn } from "../lib/utils";
 
@@ -38,8 +34,6 @@ export default function HistoryPage() {
   const [search, setSearch] = useState("");
   const [villageFilter, setVillageFilter] = useState("");
   const [landTypeFilter, setLandTypeFilter] = useState("all");
-  const [editData, setEditData] = useState<Partial<LandRecord>>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<LandRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -93,10 +87,6 @@ export default function HistoryPage() {
     fetchRecords();
   }, [search, villageFilter, landTypeFilter]);
 
-  const handleDelete = async (id: string) => {
-    setDeleteId(id);
-  };
-
   const confirmDelete = async () => {
     if (!deleteId) return;
     try {
@@ -111,52 +101,30 @@ export default function HistoryPage() {
 
   const exportAll = () => {
     if (records.length === 0) return;
-    const worksheet = XLSX.utils.json_to_sheet(records.map(r => ({
-      'Extraction Date': new Date(r.createdAt || "").toLocaleDateString(),
-      'File Name': r.fileName,
-      'भू-धारणा पद्धती': r.landType,
-      'गाव': r.village,
-      'तालुका': r.taluka,
-      'जिल्हा': r.district,
-      'क्षेत्र (Area)': r.area,
-      'Confidence': `${((r.confidence || 0) * 100).toFixed(1)}%`
-    })));
+    const worksheetData = records.map(r => {
+      const data = r.extractedData || {};
+      const row: Record<string, string> = {};
+      FIXED_COLUMNS.forEach(col => {
+        row[col] = data[col] || "-";
+      });
+      row["File Path"] = r.filePath;
+      row["Created At"] = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "-";
+      return row;
+    });
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Full Archive");
     XLSX.writeFile(workbook, `Maharashtra_History_Export_${Date.now()}.xlsx`);
   };
 
-  const startEdit = (record: LandRecord) => {
-    setEditingId(record.id);
-    setEditData({ ...record });
-  };
+  const uniqueVillages = Array.from(new Set(records.map(r => r.village || r.extractedData?.["गाव"]))).filter(Boolean);
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const updateEditField = (field: keyof LandRecord, value: string | number) => {
-    setEditData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const saveEdit = async () => {
-    if (!editingId || !editData.id) return;
-    try {
-      const res = await fetch("/api/records", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ ...editData, isNew: false })
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      setRecords(prev => prev.map(r => r.id === editingId ? { ...r, ...editData } as LandRecord : r));
-      cancelEdit();
-    } catch (error) {
-      console.error("Edit save failed:", error);
-    }
-  };
-
-  const uniqueVillages = Array.from(new Set(records.map(r => r.village))).filter(Boolean);
+  const getCellClass = (value: string) => {
+  const trimmed = value.trim().toUpperCase();
+  if (trimmed === "YES") return "px-3 py-2 text-[10px] font-bold text-red-600 bg-red-50 whitespace-nowrap";
+  if (trimmed === "NO") return "px-3 py-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 whitespace-nowrap";
+  return "px-3 py-2 text-[10px] text-slate-600 whitespace-nowrap";
+};
 
   return (
     <div className="space-y-8 pb-20">
@@ -176,7 +144,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row gap-4 bg-white">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row gap-4">
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-gold transition-colors" />
           <input 
@@ -234,98 +202,27 @@ export default function HistoryPage() {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="border-b border-slate-200 text-[10px] uppercase tracking-widest font-bold text-slate-400 bg-slate-50">
-                            <th className="px-8 py-4">Ingestion Source</th>
-                            <th className="px-8 py-4">Regional Metadata</th>
-                            <th className="px-8 py-4">Land Area</th>
-                            <th className="px-8 py-4">Entity Details</th>
-                            <th className="px-8 py-4 text-center">Actions</th>
+                            {FIXED_COLUMNS.map((col, i) => (
+                              <th key={i} className="px-3 py-3 whitespace-nowrap">{col}</th>
+                            ))}
+                            <th className="px-3 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-slate-200 bg-white">
-                        {records.map((record) => (
-                            <motion.tr 
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                        {records.map((record) => {
+                          const extractedData = record.extractedData || {};
+                          return (
+                            <tr 
                                 key={record.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="group hover:bg-slate-50 transition-colors"
+                                className="hover:bg-slate-50 transition-colors"
                             >
-                                <td className="px-8 py-5">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <FileText className="w-4 h-4 text-slate-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-900">{record.fileName}</p>
-                                            <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(record.createdAt || "").toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                    {editingId === record.id ? (
-                                        <div className="flex flex-col gap-2">
-                                            <input
-                                                value={editData.village || ""}
-                                                onChange={(e) => updateEditField('village', e.target.value)}
-                                                className="font-bold text-xs text-slate-900 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-full"
-                                            />
-                                            <div className="flex gap-1">
-                                                <input
-                                                    value={editData.taluka || ""}
-                                                    onChange={(e) => updateEditField('taluka', e.target.value)}
-                                                    className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-1/2"
-                                                    placeholder="Taluka"
-                                                />
-                                                <input
-                                                    value={editData.district || ""}
-                                                    onChange={(e) => updateEditField('district', e.target.value)}
-                                                    className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-1/2"
-                                                    placeholder="District"
-                                                />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-xs text-slate-900 flex items-center gap-2">
-                                                {record.village}
-                                                <span className="bg-[#E7F3E5] text-[#2E5C31] text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest">Verified</span>
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{record.taluka} / {record.district}</span>
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-8 py-5">
-                                    {editingId === record.id ? (
-                                        <input
-                                            value={editData.area || ""}
-                                            onChange={(e) => updateEditField('area', e.target.value)}
-                                            className="text-xs font-bold text-emerald-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 w-full"
-                                        />
-                                    ) : (
-                                        <span className="text-xs font-bold text-emerald-600">{record.area}</span>
-                                    )}
-                                </td>
-                                <td className="px-8 py-5">
-                                    {editingId === record.id ? (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Type:</span>
-                                            <input
-                                                value={editData.landType || ""}
-                                                onChange={(e) => updateEditField('landType', e.target.value)}
-                                                className="text-[10px] font-semibold text-slate-600 bg-white border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500 flex-1"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Type:</span>
-                                             <span className="text-[10px] font-semibold text-slate-600 uppercase">{record.landType}</span>
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-8 py-5">
-                                    <div className="flex items-center justify-center gap-2">
+                                {FIXED_COLUMNS.map((col, i) => (
+                                  <td key={i} className={getCellClass(extractedData[col] || "-")}>
+                                    {i === 1 ? record.fileName : (extractedData[col] || "-")}
+                                  </td>
+                                ))}
+                                <td className="px-3 py-3">
+                                    <div className="flex items-center justify-center gap-1">
                                         <button 
                                             onClick={() => window.open(record.filePath, '_blank')}
                                             className="p-1.5 text-slate-400 hover:text-amber-500"
@@ -333,45 +230,18 @@ export default function HistoryPage() {
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
-                                        {editingId === record.id ? (
-                                            <>
-                                                <button 
-                                                    onClick={saveEdit}
-                                                    className="p-1.5 text-emerald-600 hover:scale-110 transition-transform"
-                                                    title="Save Changes"
-                                                >
-                                                    <Save className="w-4 h-4" />
-                                                </button>
-                                                <button 
-                                                    onClick={cancelEdit}
-                                                    className="p-1.5 text-slate-400 hover:text-red-500"
-                                                    title="Cancel"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button 
-                                                    onClick={() => startEdit(record)}
-                                                    className="p-1.5 text-slate-400 hover:text-amber-500"
-                                                    title="Edit Record"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button 
-                                                    onClick={() => setDeleteId(record.id)}
-                                                    className="p-1.5 text-slate-400 hover:text-red-500"
-                                                    title="Delete Record"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </>
-                                        )}
+                                        <button 
+                                            onClick={() => setDeleteId(record.id)}
+                                            className="p-1.5 text-slate-400 hover:text-red-500"
+                                            title="Delete Record"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </td>
-                            </motion.tr>
-                        ))}
+                            </tr>
+                          );
+                        })}
                     </tbody>
                 </table>
             </div>

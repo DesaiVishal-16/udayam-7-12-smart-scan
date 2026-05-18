@@ -144,6 +144,11 @@ export default function Dashboard() {
                   return idx !== -1 ? firstRow[idx] || "" : "";
                 };
 
+                const extractedData: Record<string, string> = {};
+                headers.forEach((header, idx) => {
+                  extractedData[header] = firstRow[idx] || "";
+                });
+
                 const record: LandRecord = {
                     id: Math.random().toString(36).substr(2, 9),
                     fileName,
@@ -154,7 +159,8 @@ export default function Dashboard() {
                     district: getCol("जिल्हा") || "Unknown",
                     area: getCol("Total Area (क्षेत्र)") || "Unknown",
                     mutationNumber: 0,
-                    confidence: 0.9
+                    confidence: 0.9,
+                    extractedData
                 };
                 
                 newRecords.push({ ...record, isDirty: false });
