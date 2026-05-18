@@ -26,7 +26,8 @@ db.exec(`
     area TEXT,
     mutationNumber INTEGER,
     confidence REAL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    extractedData TEXT
   )
 `);
 
@@ -92,7 +93,11 @@ app.get("/api/records", (req, res) => {
 
     query += " ORDER BY createdAt DESC";
     const records = db.prepare(query).all(...params);
-    res.json(records);
+    const parsed = records.map((r: any) => ({
+      ...r,
+      extractedData: r.extractedData ? JSON.parse(r.extractedData) : {}
+    }));
+    res.json(parsed);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
@@ -100,7 +105,7 @@ app.get("/api/records", (req, res) => {
 
 app.post("/api/records", (req, res) => {
   try {
-    const { id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence } = req.body;
+    const { id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence, extractedData } = req.body;
     
     // Check for duplicate
     const existing = db.prepare("SELECT id FROM records WHERE id = ? OR (fileName = ? AND village = ?)").get(id, fileName, village);
@@ -108,12 +113,13 @@ app.post("/api/records", (req, res) => {
        return res.status(409).json({ error: "Duplicate record detected" });
     }
 
+    const extractedDataJson = extractedData ? JSON.stringify(extractedData) : null;
     const insert = db.prepare(`
-      INSERT OR REPLACE INTO records (id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO records (id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence, extractedData)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    insert.run(id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence);
+    insert.run(id, fileName, filePath, landType, village, taluka, district, area, mutationNumber, confidence, extractedDataJson);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
