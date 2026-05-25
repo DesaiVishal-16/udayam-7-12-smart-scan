@@ -38,6 +38,7 @@ const ai = new GoogleGenAI({
   vertexai: true,
   project: process.env.GOOGLE_PROJECT_ID || "",
   location: process.env.GOOGLE_LOCATION || "us-central1",
+  apiVersion: "v1",
 });
 
 const FIXED_COLUMNS = [
