@@ -1,11 +1,15 @@
-import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI, setDefaultBaseUrls, Type, ThinkingLevel } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
-if (!apiKey) {
-  console.warn("GEMINI_API_KEY is not defined in the environment.");
+setDefaultBaseUrls({ vertexUrl: "https://vertexai.googleapis.com" });
+
+const project = process.env.GOOGLE_PROJECT_ID || "";
+const location = process.env.GOOGLE_LOCATION || "us-central1";
+
+if (!project) {
+  console.warn("GOOGLE_PROJECT_ID is not defined in the environment.");
 }
 
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ vertexai: true, project, location });
 
 const FIXED_COLUMNS = [
   "Date", "File Name", "भू-धारणा पद्धती", "गाव", "तालुका", "जिल्हा",
