@@ -214,7 +214,7 @@ async function extractLandRecordFromPath(filePath: string, fileName: string) {
     const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
     if (isQuotaError) {
       console.warn("[AI Extraction] Quota exceeded. Falling back to Flash model...");
-      response = await extractWithModel("gemini-2.0-flash", true);
+      response = await extractWithModel("gemini-3.1-flash", true);
     } else {
       throw error;
     }
