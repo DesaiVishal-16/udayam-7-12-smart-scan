@@ -209,7 +209,7 @@ async function extractLandRecordFromPath(filePath: string, fileName: string) {
 
   let response;
   try {
-    response = await extractWithModel("gemini-3.1-flash-preview-01-28", false);
+    response = await extractWithModel("gemini-3.1-flash", false);
   } catch (error: any) {
     const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
     if (isQuotaError) {
