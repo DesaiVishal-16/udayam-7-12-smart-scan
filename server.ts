@@ -196,6 +196,7 @@ async function extractLandRecordFromPath(filePath: string, fileName: string) {
       model: modelName,
       contents: [
         {
+          role: "user",
           parts: [
             { text: generatePrompt() },
             { inlineData: { data: base64Data, mimeType } },
