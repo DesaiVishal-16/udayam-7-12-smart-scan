@@ -27,7 +27,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import { motion, AnimatePresence } from "motion/react";
 import { useDropzone } from "react-dropzone";
-import { extractLandRecord } from "../lib/gemini";
+
 import { LandRecord, ExtractionResult } from "../types";
 import { exportExtractionToExcel } from "../lib/excel";
 import ResultsPreview from "./ResultsPreview";
@@ -105,34 +105,42 @@ export default function Dashboard() {
         
         await Promise.all(batch.map(async (file, batchIdx) => {
             try {
-                // RUN UPLOAD AND EXTRACTION IN PARALLEL for the same file
-                // This eliminates the sequential wait time.
-                const uploadPromise = (async () => {
-                   const formData = new FormData();
-                   formData.append("file", file);
-                   const uploadRes = await fetch("/api/upload", {
-                       method: "POST",
-                       headers: { "Accept": "application/json" },
-                       body: formData
-                   });
+                // Upload file to server
+                const formData = new FormData();
+                formData.append("file", file);
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    headers: { "Accept": "application/json" },
+                    body: formData
+                });
 
-                   if (!uploadRes.ok) {
-                       const errorText = await uploadRes.text();
-                       throw new Error(`Cloud storage failure: ${uploadRes.status} ${errorText}`);
-                   }
+                if (!uploadRes.ok) {
+                    const errorText = await uploadRes.text();
+                    throw new Error(`Upload failed: ${uploadRes.status} ${errorText}`);
+                }
 
-                   const contentType = uploadRes.headers.get("content-type");
-                   if (!contentType || !contentType.includes("application/json")) {
-                       const text = await uploadRes.text();
-                       throw new Error("Received HTML instead of JSON from storage. Server might be restarting.");
-                   }
-                   return await uploadRes.json();
-                })();
+                const contentType = uploadRes.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await uploadRes.text();
+                    throw new Error("Received HTML instead of JSON from server.");
+                }
 
-                const extractionPromise = extractLandRecord(file);
-
-                const [uploadData, extraction] = await Promise.all([uploadPromise, extractionPromise]);
+                const uploadData = await uploadRes.json();
                 const { filePath, fileName } = uploadData;
+
+                // Extract on server
+                const extractRes = await fetch("/api/extract", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                    body: JSON.stringify({ filePath, fileName }),
+                });
+
+                if (!extractRes.ok) {
+                    const err = await extractRes.json();
+                    throw new Error(err.error || "Extraction failed");
+                }
+
+                const extraction = await extractRes.json();
 
                 newResults.push(extraction);
                 newResultPaths.push(filePath);
