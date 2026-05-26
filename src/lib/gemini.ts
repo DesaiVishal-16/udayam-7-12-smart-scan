@@ -148,12 +148,12 @@ export async function extractLandRecord(file: File): Promise<{ tables: { headers
 
     let response;
     try {
-      response = await extractWithModel("gemini-2.5-flash", false);
+      response = await extractWithModel("gemini-3.5-flash", false);
     } catch (error: any) {
       const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
       if (isQuotaError) {
         console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model...");
-        response = await extractWithModel("gemini-2.0-flash", true);
+        response = await extractWithModel("gemini-3.5-flash", true);
       } else {
         throw error;
       }
