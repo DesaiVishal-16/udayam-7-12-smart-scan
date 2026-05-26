@@ -18,7 +18,7 @@ const FIXED_COLUMNS = [
   "वतन", "नवीन शर्त", "अतिक्रमण", "गुरे चरण/चरई", "देवस्थान",
   "कलम 36/36 अ आदिवासी", "पुनर्वसन", "भाडेपट्टा", "वक्फ",
   "तुकडा/तुकडेबंदी", "अ पा क", "एकुक", "नजर गहाण", "बडिंग",
-  "भूमीधारी हक्क", "तगाई"
+  "भूमीधारी हक्क", "तगाई", "वहिवाट"
 ];
 
 function generatePrompt(): string {
@@ -59,16 +59,16 @@ CRITICAL INSTRUCTIONS:
    - District (जिल्हा): extract exactly
    - Land type (भू-धारणा पद्धती): like "भोगवटादार वर्ग १" or "भोगवटादार वर्ग २"
    - Area (क्षेत्र): like "1 हे 23 आर" or "24 चौ. मी."
-2. Return a SINGLE table (not one per page) with exactly 30 columns.
+2. Return a SINGLE table (not one per page) with exactly 31 columns.
 3. Use the exact column headers below — do NOT add, remove, or rename any column.
 4. Each row represents ONE distinct survey entry (NOT one row per land type).
 5. The first 8 columns (Date, File Name, भू-धारणा पद्धती, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must contain actual extracted data values and be the SAME across all rows.
-6. For the remaining 22 columns (सीलिंग through तगाई), look at the document and determine if each specific land type or right is present. If the document shows/mentions that particular land type or right, put "YES". If it does NOT appear anywhere in the document, put "NO". Do NOT put land owner names, survey numbers, or area values in these columns — ONLY "YES" or "NO".
+6. For the remaining 23 columns (सीलिंग through वहिवाट), look at the document and determine if each specific land type or right is present. If the document shows/mentions that particular land type or right, put "YES". If it does NOT appear anywhere in the document, put "NO". Do NOT put land owner names, survey numbers, or area values in these columns — ONLY "YES" or "NO".
 7. Never leave cells empty — use "NO" when inapplicable.
 8. Never duplicate rows.
 9. If you are unsure about any Marathi text, try your best to match the characters as closely as possible.
 
-The 30 columns in order are:
+The 31 columns in order are:
 ${columns}
 
 Return the response in this exact JSON format:
