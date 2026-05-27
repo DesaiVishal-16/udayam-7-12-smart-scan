@@ -100,6 +100,17 @@ CRITICAL INSTRUCTIONS:
     C. APPLY THE SAME APPROACH TO ALL 23 INDICATOR COLUMNS:
        For any term like "सीलिंग", "इनाम", "कुळ", etc., use the column header to identify which cell to check, then look for ANY mark in that cell.
 
+11. SPECIFIC VERIFICATION RULE FOR THE "भाडेपट्टा" COLUMN:
+    - Scan the ENTIRE document for the word "भाडे" or "भाडेपट्टा" (भाडे/ भाडेपट्टा)
+    - Check these locations thoroughly:
+      * The "भू-धारणा पद्धती" (land type) column values
+      * Rubber stamps, seals, or official impressions anywhere on the document
+      * Handwritten notes, marginal entries, or any text outside the main table
+      * Any text, stamp, seal, or mark in ANY column or row
+    - If "भाडे" or "भाडेपट्टा" is found ANYWHERE in the document → set this column to "YES"
+    - If there is absolutely no occurrence of "भाडे" or "भाडेपट्टा" anywhere → set this column to "NO"
+    - This is a document-level verification: the presence of this term anywhere means this tenancy right applies
+
 The 31 columns in order are:
 ${columns}
 
@@ -250,8 +261,11 @@ function postProcessTables(data: any, file: File): { tables: { headers: string[]
     const bhadepatnaIdx = table.headers.indexOf("भाडेपट्टा");
     if (landTypeIdx !== -1 && bhadepatnaIdx !== -1) {
       for (const row of table.rows) {
-        if (row[landTypeIdx]?.includes("भाडेपट्टा") && row[bhadepatnaIdx] !== "YES") {
-          row[bhadepatnaIdx] = "YES";
+        if (row[bhadepatnaIdx] !== "YES") {
+          const landTypeVal = row[landTypeIdx] || "";
+          if (landTypeVal.includes("भाडे") || landTypeVal.includes("भाडेपट्टा")) {
+            row[bhadepatnaIdx] = "YES";
+          }
         }
       }
     }
