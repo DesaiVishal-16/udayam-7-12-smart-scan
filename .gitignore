@@ -2,8 +2,6 @@
 node_modules/
 
 # Environment
-.env
-.env.local
 .env.*.local
 
 # Build output
@@ -19,7 +17,6 @@ build/
 npm-debug.log*
 
 # Editor
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -44,3 +41,4 @@ server.out
 
 # Documentation — not for remote
 vertex-ai-backup.md
+config.bat

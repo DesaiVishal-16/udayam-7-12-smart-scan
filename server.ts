@@ -462,12 +462,12 @@ async function extractLandRecordFromPath(filePath: string, fileName: string) {
 
   let response;
   try {
-    response = await extractWithModel("gemini-3.5-pro", false);
+    response = await extractWithModel("gemini-3.5-flash", false);
   } catch (error: any) {
     const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
     if (isQuotaError) {
       console.warn("[AI Extraction] Quota exceeded. Falling back to Flash model...");
-      response = await extractWithModel("gemini-3.5-pro", true);
+      response = await extractWithModel("gemini-3.5-flash", true);
     } else {
       throw error;
     }
@@ -641,3 +641,4 @@ async function startServer() {
 }
 
 startServer();
+
