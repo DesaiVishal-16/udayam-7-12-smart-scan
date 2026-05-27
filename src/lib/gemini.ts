@@ -27,26 +27,25 @@ function generatePrompt(): string {
 - 7/12 extracts
 - फेरफार registers
 - mutation entries
-- handwritten Marathi land documents
-- old Devanagari administrative records
+- handwritten Marathi land records
+- old Devanagari administrative documents
 
 Your task is to perform HIGH-ACCURACY extraction from difficult handwritten Maharashtra land records while maintaining FAST execution speed.
 
 CRITICAL:
 Do NOT behave like a generic OCR engine.
-Do NOT rely only on standard OCR layout blocks.
+Do NOT rely only on standard OCR layout parsing.
 
 You must visually inspect:
 - handwritten Marathi words
 - faint ink strokes
-- side annotations
-- curved handwriting
 - overwritten text
-- low-contrast regions
+- low-contrast handwriting
 - connected cursive characters
 - margin notes
+- side annotations
 - circular handwritten markings
-- old revenue terminology
+- historical revenue terminology
 
 Treat this as HUMAN-LIKE document reading.
 
@@ -54,16 +53,52 @@ Treat this as HUMAN-LIKE document reading.
 OCR READING STRATEGY
 ==================================================
 
-1. First visually understand the document structure
+1. First visually understand the overall document structure
 2. Then inspect each handwritten region independently
 3. Re-read unclear Marathi words character-by-character
-4. Compare partially visible words against common Maharashtra revenue terminology
+4. Examine stroke continuity carefully
 5. Use contextual reasoning ONLY as secondary support
 6. Never ignore faint handwritten text
 7. Never skip margin notes or side remarks
-8. Pay special attention to legal land-category words
+8. Pay special attention to handwritten legal land-category words
 9. Distinguish visually similar Marathi words carefully
-10. Avoid semantic guessing
+10. Avoid semantic guessing without visual evidence
+
+==================================================
+ADAPTIVE LEGAL WORD RECOGNITION
+==================================================
+
+Different Marathi legal words require different confidence thresholds.
+
+For LONG and DISTINCTIVE legal words such as:
+- भाडेपट्टा
+- नजर गहाण
+- भूमीधारी
+- तुकडेबंदी
+- पुनर्वसन
+
+allow partial handwritten reconstruction when:
+1. Key syllables are visible
+2. Stroke continuity strongly resembles the word
+3. The handwritten flow matches expected Marathi structure
+4. Nearby legal context supports the interpretation
+5. No better competing Marathi legal word exists
+
+Example:
+If handwriting visually resembles:
+"भा....पट्टा"
+it may still represent:
+"भाडेपट्टा"
+
+For SHORT or COMMON words such as:
+- वन
+- कुळ
+- वतन
+- तगाई
+
+require stronger direct visual evidence.
+
+Do NOT hallucinate short words from random curves or broken ink.
 
 ==================================================
 VERY IMPORTANT VALIDATION RULE
@@ -72,15 +107,18 @@ VERY IMPORTANT VALIDATION RULE
 DO NOT mark YES based only on contextual guessing.
 
 A keyword may be marked YES ONLY IF:
+1. Visible character structure supports the word
+2. Handwritten stroke flow resembles the Marathi word
+3. Multiple visible characters or syllables support the interpretation
+4. The word is visually identifiable from the document
 
-1. At least 70% of the visible character structure matches visually
-2. The handwritten stroke pattern resembles the Marathi word
-3. The word is visually identifiable in the document
-4. Multiple visible characters support the match
-5. Context alone is NOT sufficient
+Context alone is NOT sufficient.
 
-If confidence is weak, unclear, partially imagined, or unsupported visually:
-RETURN "NO"
+For long distinctive legal terms:
+partial reconstruction is allowed.
+
+For short/common legal terms:
+strict direct visibility is required.
 
 A FALSE YES is worse than a FALSE NO.
 
@@ -119,16 +157,13 @@ ANTI-HALLUCINATION RULES
 Do NOT infer these words using nearby context alone:
 
 - तगाई
-- भाडेपट्टा
-- नजर गहाण
+- वन
+- वतन
+- कुळ
 - वक्फ
 - इनाम
-- पुनर्वसन
-- भूमीधारी
 
-These must be visually present.
-
-Nearby legal context is NOT sufficient.
+These require stronger direct visual evidence.
 
 If visual evidence is weak:
 return "NO"
@@ -155,11 +190,11 @@ CRITICAL EXTRACTION RULES
    - "NO"
 9. Never leave cells empty
 10. Never duplicate rows
-11. Ignore decorative lines/borders/non-text artifacts
+11. Ignore decorative borders/non-text artifacts
 12. Never hallucinate unseen values
-13. If uncertain, prefer NO over hallucinated YES
-14. Printed and handwritten text both matter
-15. Side notes and annotations also count
+13. Printed and handwritten text both matter
+14. Side notes and annotations also count
+15. Use balanced precision and recall
 
 ==================================================
 COLUMN CLASSIFICATION RULE
@@ -170,12 +205,12 @@ For columns:
 "सीलिंग" through "वहिवाट"
 
 Mark:
-- "YES" ONLY if visually present in any form
+- "YES" ONLY if visually supported
 - "NO" otherwise
 
 Handwritten abbreviations count ONLY if visually recognizable.
 
-Do NOT use contextual assumptions.
+Do NOT use pure contextual assumptions.
 
 ==================================================
 31 REQUIRED COLUMNS
