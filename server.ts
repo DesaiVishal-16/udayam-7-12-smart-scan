@@ -72,8 +72,9 @@ You must visually inspect:
 - overwritten text
 - low-contrast handwriting
 - connected cursive characters
-- margin notes
+- merged syllables
 - side annotations
+- margin notes
 - circular handwritten markings
 - historical revenue terminology
 
@@ -95,6 +96,46 @@ OCR READING STRATEGY
 10. Avoid semantic guessing without visual evidence
 
 ==================================================
+COMPOUND HANDWRITTEN LEGAL WORD DETECTION
+==================================================
+
+Certain Maharashtra legal land terms are commonly written in highly connected, compressed, curved, partially merged, or faded handwriting.
+
+Examples:
+- तुकडेबंदी
+- भाडेपट्टा
+- नजर गहाण
+- भूमीधारी
+- पुनर्वसन
+
+For these compound legal words:
+
+1. Do NOT require perfectly separated characters
+2. Allow merged syllables and connected strokes
+3. Allow partial middle-character fading
+4. Evaluate overall handwritten flow and legal word pattern
+5. Match visible syllable groups instead of isolated characters
+6. Prioritize holistic word-shape recognition over strict isolated-character OCR
+
+Examples:
+- "तुकडे...दी"
+- "तु...डेबंदी"
+- "भा...पट्टा"
+
+may still represent valid legal terms.
+
+If:
+- beginning syllables match
+- ending syllables match
+- stroke continuity supports the word
+- surrounding legal formatting supports the interpretation
+- no better competing Marathi legal word exists
+
+then mark the field as YES.
+
+Do NOT reject compound handwritten legal terms merely because some middle characters are faded or merged.
+
+==================================================
 ADAPTIVE LEGAL WORD RECOGNITION
 ==================================================
 
@@ -113,12 +154,6 @@ allow partial handwritten reconstruction when:
 3. The handwritten flow matches expected Marathi structure
 4. Nearby legal context supports the interpretation
 5. No better competing Marathi legal word exists
-
-Example:
-If handwriting visually resembles:
-"भा....पट्टा"
-it may still represent:
-"भाडेपट्टा"
 
 For SHORT or COMMON words such as:
 - वन
@@ -144,7 +179,7 @@ A keyword may be marked YES ONLY IF:
 
 Context alone is NOT sufficient.
 
-For long distinctive legal terms:
+For long distinctive compound legal terms:
 partial reconstruction is allowed.
 
 For short/common legal terms:
@@ -156,10 +191,11 @@ A FALSE YES is worse than a FALSE NO.
 HIGH PRIORITY LEGAL KEYWORDS
 ==================================================
 
-Actively inspect the document for these Marathi legal/revenue words even if handwritten, faint, partially visible, or curved:
+Actively inspect the document for these Marathi legal/revenue words even if handwritten, faint, partially visible, curved, compressed, or merged:
 
 भाडेपट्टा
 नजर गहाण
+तुकडेबंदी
 कुळ
 इनाम
 देवस्थान
@@ -170,7 +206,6 @@ Actively inspect the document for these Marathi legal/revenue words even if hand
 वने
 भूदान
 अतिक्रमण
-तुकडेबंदी
 भूमीधारी
 तगाई
 वहिवाट
