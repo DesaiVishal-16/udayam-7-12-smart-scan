@@ -75,6 +75,7 @@ function generatePrompt(): string {
     if (i === 7) return '"123"';
     if (c === "कुळ") return '"YES"';
     if (c === "इनाम") return '"YES"';
+    if (c === "भाडेपट्टा") return '"YES"';
     return '"NO"';
   }).join(", ");
 
@@ -111,6 +112,23 @@ CRITICAL INSTRUCTIONS:
 7. Never leave cells empty — use "NO" when inapplicable.
 8. Never duplicate rows.
 9. If you are unsure about any Marathi text, try your best to match the characters as closely as possible.
+10. HANDLING ILLEGIBLE HANDWRITING (especially for terms like "भाडेपट्टा"):
+
+    A. USE THE TABLE COLUMN STRUCTURE AS A GUIDE:
+       - First locate the column header in the document that reads "भाडेपट्टा"
+       - For each survey row, examine the cell under that column header
+       - Even if the handwriting is completely unreadable, if there is ANY ink, stamp residue, mark, or handwritten stroke in that specific cell → it is "YES"
+       - The column header tells you what right the column represents; any content in the cell means that right applies
+
+    B. PARTIAL CHARACTER CUES FOR "भाडेपट्टा":
+       When handwriting is poor, look for these distinctive shapes:
+       - Starts with "भा" (भ with आ मात्रा attached above)
+       - Middle has "डे" (ड with a small ए मात्रा dash above-right)
+       - Ends with "पट्टा" (प followed by two टs together with आ मात्रा)
+       - The word is roughly 8-9 characters long
+
+    C. APPLY THE SAME APPROACH TO ALL 23 INDICATOR COLUMNS:
+       For any term like "सीलिंग", "इनाम", "कुळ", etc., use the column header to identify which cell to check, then look for ANY mark in that cell.
 
 The 31 columns in order are:
 ${columns}
@@ -158,6 +176,16 @@ function postProcessTables(data: any, fileName: string) {
     });
 
     table.rows = table.rows.filter((row: string[]) => row.some((cell: string) => cell !== ""));
+
+    const landTypeIdx = table.headers.indexOf("भू-धारणा पद्धती");
+    const bhadepatnaIdx = table.headers.indexOf("भाडेपट्टा");
+    if (landTypeIdx !== -1 && bhadepatnaIdx !== -1) {
+      for (const row of table.rows) {
+        if (row[landTypeIdx]?.includes("भाडेपट्टा") && row[bhadepatnaIdx] !== "YES") {
+          row[bhadepatnaIdx] = "YES";
+        }
+      }
+    }
 
     const seen = new Set<string>();
     table.rows = table.rows.filter((row: string[]) => {
