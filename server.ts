@@ -52,106 +52,161 @@ const FIXED_COLUMNS = [
 ];
 
 function generatePrompt(): string {
-  const columns = FIXED_COLUMNS.map(c => `"${c}"`).join(", ");
-  const sampleRow1 = FIXED_COLUMNS.map((c, i) => {
-    if (i === 0) return '"DD/MM/YYYY"';
-    if (i === 1) return '"document.pdf"';
-    if (i === 2) return '"भोगवटादार वर्ग १"';
-    if (i === 3) return '"शिरूर"';
-    if (i === 4) return '"शिरूर"';
-    if (i === 5) return '"पुणे"';
-    if (i === 6) return '"1 हे 23 आर"';
-    if (i === 7) return '"123"';
-    return '"NO"';
-  }).join(", ");
-  const sampleRow2 = FIXED_COLUMNS.map((c, i) => {
-    if (i === 0) return '"DD/MM/YYYY"';
-    if (i === 1) return '"document.pdf"';
-    if (i === 2) return '"भोगवटादार वर्ग २"';
-    if (i === 3) return '"शिरूर"';
-    if (i === 4) return '"शिरूर"';
-    if (i === 5) return '"पुणे"';
-    if (i === 6) return '"1 हे 23 आर"';
-    if (i === 7) return '"123"';
-    if (c === "कुळ") return '"YES"';
-    if (c === "इनाम") return '"YES"';
-    if (c === "भाडेपट्टा") return '"YES"';
-    return '"NO"';
-  }).join(", ");
+  return `You are an expert forensic OCR engine and Maharashtra Land Record specialist trained specifically on historical handwritten revenue records, including 7/12 extracts, फेरफार registers, mutation records, and handwritten Marathi Devanagari documents.
 
-  return `You are an expert OCR and Land Record specialist for the Government of Maharashtra.
+Your task is to perform HIGH-ACCURACY visual text extraction from difficult handwritten land records while maintaining FAST execution speed.
 
-Analyze this Maharashtra 7/12 (Satbara) document and extract a structured table.
+CRITICAL:
+Do NOT behave like a normal OCR engine.
+Do NOT rely only on standard OCR text blocks or layout parsing.
 
-CRITICAL INSTRUCTIONS:
-1. ACCURACY IS PARAMOUNT: Extract Marathi text EXACTLY as written in the document. Pay special attention to:
-   - Village names (गाव): extract exactly, verify spelling
-   - Taluka (तालुका): extract exactly
-   - District (जिल्हा): extract exactly
-   - Land type (भू-धारणा पद्धती): like "भोगवटादार वर्ग १" or "भोगवटादार वर्ग २"
-   - Area (क्षेत्र): like "1 हे 23 आर" or "24 चौ. मी."
-2. Return a SINGLE table (not one per page) with exactly 31 columns.
-3. Use the exact column headers below — do NOT add, remove, or rename any column.
-4. Each row represents ONE distinct survey entry (NOT one row per land type).
-5. The first 8 columns (Date, File Name, भू-धारणा पद्धती, गाव, तालुका, जिल्हा, Total Area (क्षेत्र), शेवटचा फेरफार क्रमांक) must contain actual extracted data values and be the SAME across all rows.
-6. For the remaining 23 columns (सीलिंग through वहिवाट), determine YES or NO for EACH survey entry row:
+You must visually inspect:
+- handwritten Marathi words
+- faint ink strokes
+- partially overwritten text
+- side annotations
+- curved handwriting
+- margin notes
+- low-contrast regions
+- connected cursive characters
+- historical revenue terminology
 
-   HOW TO DETECT LAND RIGHTS IN 7/12 DOCUMENTS:
-   - These 23 columns correspond to pre-printed column headers in the 7/12 table
-   - For each survey number row, examine the cell under each column header for:
-     * A rubber stamp containing the Marathi term (e.g., a "भाडेपट्टा" stamp)
-     * Handwritten text or notation in that column
-     * A checkmark (✓), tick mark, or any mark
-     * A seal or official stamp impression
-   - If ANY visual indication (stamp, handwriting, check, seal, text) is present → put "YES"
-   - If the cell is COMPLETELY EMPTY/BLANK with no marks → put "NO"
+Treat this as HUMAN-LIKE document reading.
 
-   CRITICAL: Scan the ENTIRE document carefully. These indicators are often small rubber stamps, faint seals, or handwritten entries. Pay special attention to stamps and seals — they frequently contain terms like "भाडेपट्टा", "सीलिंग", "इनाम", "कुळ", etc. Do NOT confuse similar-looking Marathi characters or terms.
+-----------------------------------
+OCR READING STRATEGY
+-----------------------------------
 
-   ONLY put "YES" or "NO" — never leave cells empty or put other text.
-7. Never leave cells empty — use "NO" when inapplicable.
-8. Never duplicate rows.
-9. If you are unsure about any Marathi text, try your best to match the characters as closely as possible.
-10. HANDLING ILLEGIBLE HANDWRITING (especially for terms like "भाडेपट्टा"):
+1. First identify document structure visually
+2. Then inspect each handwritten region independently
+3. Re-read unclear Marathi words character-by-character
+4. Use nearby words and land-record context to infer unclear letters
+5. Prefer valid Maharashtra revenue terminology whenever ambiguity exists
+6. If OCR confidence is low:
+   - reconstruct probable Marathi word visually
+   - compare against common land-record vocabulary
+7. NEVER ignore faint handwritten words
+8. NEVER skip side notes or circular annotations
+9. Pay special attention to legal land categories and handwritten remarks
 
-    A. USE THE TABLE COLUMN STRUCTURE AS A GUIDE:
-       - First locate the column header in the document that reads "भाडेपट्टा"
-       - For each survey row, examine the cell under that column header
-       - Even if the handwriting is completely unreadable, if there is ANY ink, stamp residue, mark, or handwritten stroke in that specific cell → it is "YES"
-       - The column header tells you what right the column represents; any content in the cell means that right applies
+-----------------------------------
+HIGH PRIORITY MARATHI KEYWORDS
+-----------------------------------
 
-    B. PARTIAL CHARACTER CUES FOR "भाडेपट्टा":
-       When handwriting is poor, look for these distinctive shapes:
-       - Starts with "भा" (भ with आ मात्रा attached above)
-       - Middle has "डे" (ड with a small ए मात्रा dash above-right)
-       - Ends with "पट्टा" (प followed by two टs together with आ मात्रा)
-       - The word is roughly 8-9 characters long
+Actively look for these words even if partially visible, faint, broken, or handwritten:
 
-    C. APPLY THE SAME APPROACH TO ALL 23 INDICATOR COLUMNS:
-       For any term like "सीलिंग", "इनाम", "कुळ", etc., use the column header to identify which cell to check, then look for ANY mark in that cell.
+भाडेपट्टा
+कुळ
+इनाम
+देवस्थान
+वतन
+गावठाण
+फॉरेस्ट
+वन
+भूदान
+अतिक्रमण
+तुकडेबंदी
+नजर गहाण
+भूमीधारी
+तगाई
+वहिवाट
+पुनर्वसन
+वक्फ
+आदिवासी
+चरई
+सीलिंग
 
-11. SPECIFIC VERIFICATION RULE FOR THE "भाडेपट्टा" COLUMN:
-    - Scan the ENTIRE document for the word "भाडे" or "भाडेपट्टा" (भाडे/ भाडेपट्टा)
-    - Check these locations thoroughly:
-      * The "भू-धारणा पद्धती" (land type) column values
-      * Rubber stamps, seals, or official impressions anywhere on the document
-      * Handwritten notes, marginal entries, or any text outside the main table
-      * Any text, stamp, seal, or mark in ANY column or row
-    - If "भाडे" or "भाडेपट्टा" is found ANYWHERE in the document → set this column to "YES"
-    - If there is absolutely no occurrence of "भाडे" or "भाडेपट्टा" anywhere → set this column to "NO"
-    - This is a document-level verification: the presence of this term anywhere means this tenancy right applies
+If a handwritten word approximately matches one of these keywords visually and contextually, prefer the closest valid Marathi revenue term.
 
-The 31 columns in order are:
-${columns}
+-----------------------------------
+EXTRACTION RULES
+-----------------------------------
 
-Return the response in this exact JSON format:
+Task:
+Analyze this Maharashtra 7/12 (Saatbara) document and extract a structured table.
+
+Critical Rules:
+
+1. Extract Marathi text EXACTLY as visually written
+2. Preserve original Marathi spelling
+3. Return EXACTLY one table
+4. Use EXACTLY the provided 31 columns
+5. Do NOT rename/add/remove columns
+6. Each row = ONE unique survey/mutation entry
+7. First 8 columns must contain actual extracted values
+8. Remaining columns must contain ONLY:
+   - "YES"
+   - "NO"
+9. Never leave cells empty
+10. Never duplicate rows
+11. Use contextual Marathi reconstruction for unclear handwriting
+12. If a keyword is visually present even faintly, mark YES
+13. Prioritize recall over omission for handwritten legal keywords
+14. Ignore printed borders/lines/non-text artifacts
+15. Do not hallucinate unrelated values
+
+-----------------------------------
+COLUMN LOGIC
+-----------------------------------
+
+For columns:
+"सीलिंग" through "वहिवाट"
+
+Rules:
+- Mark "YES" only if the concept/word is visibly present anywhere in the document
+- Handwritten abbreviations or partially visible legal terms count as present
+- Otherwise mark "NO"
+- Never place names/numbers/areas in these columns
+
+-----------------------------------
+31 REQUIRED COLUMNS
+-----------------------------------
+
+"Date",
+"File Name",
+"भू-धारणा पद्धती",
+"गाव",
+"तालुका",
+"जिल्हा",
+"Total Area (क्षेत्र)",
+"शेवटचा फेरफार क्रमांक",
+"सीलिंग",
+"Forest / वन / फॉरेस्ट / वने",
+"इनाम",
+"भूदान",
+"गावठाण",
+"कुळ",
+"वतन",
+"नवीन शर्त",
+"अतिक्रमण",
+"गुरे चरण/चरई",
+"देवस्थान",
+"कलम 36/36 अ आदिवासी",
+"पुनर्वसन",
+"भाडेपट्टा",
+"वक्फ",
+"तुकडा/तुकडेबंदी",
+"अ पा क",
+"एकुक",
+"नजर गहाण",
+"बडिंग",
+"भूमीधारी हक्क",
+"तगाई",
+"वहिवाट"
+
+-----------------------------------
+OUTPUT FORMAT
+-----------------------------------
+
+Return ONLY valid JSON.
+
 {
   "tables": [
     {
-      "headers": [${columns}],
+      "headers": [...],
       "rows": [
-        [${sampleRow1}],
-        [${sampleRow2}]
+        [...],
+        [...]
       ]
     }
   ]
