@@ -52,50 +52,76 @@ const FIXED_COLUMNS = [
 ];
 
 function generatePrompt(): string {
-  return `You are an expert forensic OCR engine and Maharashtra Land Record specialist trained specifically on historical handwritten revenue records, including 7/12 extracts, फेरफार registers, mutation records, and handwritten Marathi Devanagari documents.
+  return `You are a forensic-grade OCR engine and Maharashtra Land Record specialist trained specifically on historical handwritten revenue records including:
 
-Your task is to perform HIGH-ACCURACY visual text extraction from difficult handwritten land records while maintaining FAST execution speed.
+- 7/12 extracts
+- फेरफार registers
+- mutation entries
+- handwritten Marathi land documents
+- old Devanagari administrative records
+
+Your task is to perform HIGH-ACCURACY extraction from difficult handwritten Maharashtra land records while maintaining FAST execution speed.
 
 CRITICAL:
-Do NOT behave like a normal OCR engine.
-Do NOT rely only on standard OCR text blocks or layout parsing.
+Do NOT behave like a generic OCR engine.
+Do NOT rely only on standard OCR layout blocks.
 
 You must visually inspect:
 - handwritten Marathi words
 - faint ink strokes
-- partially overwritten text
 - side annotations
 - curved handwriting
-- margin notes
+- overwritten text
 - low-contrast regions
 - connected cursive characters
-- historical revenue terminology
+- margin notes
+- circular handwritten markings
+- old revenue terminology
 
 Treat this as HUMAN-LIKE document reading.
 
------------------------------------
+==================================================
 OCR READING STRATEGY
------------------------------------
+==================================================
 
-1. First identify document structure visually
+1. First visually understand the document structure
 2. Then inspect each handwritten region independently
 3. Re-read unclear Marathi words character-by-character
-4. Use nearby words and land-record context to infer unclear letters
-5. Prefer valid Maharashtra revenue terminology whenever ambiguity exists
-6. If OCR confidence is low:
-   - reconstruct probable Marathi word visually
-   - compare against common land-record vocabulary
-7. NEVER ignore faint handwritten words
-8. NEVER skip side notes or circular annotations
-9. Pay special attention to legal land categories and handwritten remarks
+4. Compare partially visible words against common Maharashtra revenue terminology
+5. Use contextual reasoning ONLY as secondary support
+6. Never ignore faint handwritten text
+7. Never skip margin notes or side remarks
+8. Pay special attention to legal land-category words
+9. Distinguish visually similar Marathi words carefully
+10. Avoid semantic guessing
 
------------------------------------
-HIGH PRIORITY MARATHI KEYWORDS
------------------------------------
+==================================================
+VERY IMPORTANT VALIDATION RULE
+==================================================
 
-Actively look for these words even if partially visible, faint, broken, or handwritten:
+DO NOT mark YES based only on contextual guessing.
+
+A keyword may be marked YES ONLY IF:
+
+1. At least 70% of the visible character structure matches visually
+2. The handwritten stroke pattern resembles the Marathi word
+3. The word is visually identifiable in the document
+4. Multiple visible characters support the match
+5. Context alone is NOT sufficient
+
+If confidence is weak, unclear, partially imagined, or unsupported visually:
+RETURN "NO"
+
+A FALSE YES is worse than a FALSE NO.
+
+==================================================
+HIGH PRIORITY LEGAL KEYWORDS
+==================================================
+
+Actively inspect the document for these Marathi legal/revenue words even if handwritten, faint, partially visible, or curved:
 
 भाडेपट्टा
+नजर गहाण
 कुळ
 इनाम
 देवस्थान
@@ -103,10 +129,10 @@ Actively look for these words even if partially visible, faint, broken, or handw
 गावठाण
 फॉरेस्ट
 वन
+वने
 भूदान
 अतिक्रमण
 तुकडेबंदी
-नजर गहाण
 भूमीधारी
 तगाई
 वहिवाट
@@ -116,22 +142,42 @@ Actively look for these words even if partially visible, faint, broken, or handw
 चरई
 सीलिंग
 
-If a handwritten word approximately matches one of these keywords visually and contextually, prefer the closest valid Marathi revenue term.
+==================================================
+ANTI-HALLUCINATION RULES
+==================================================
 
------------------------------------
-EXTRACTION RULES
------------------------------------
+Do NOT infer these words using nearby context alone:
 
-Task:
+- तगाई
+- भाडेपट्टा
+- नजर गहाण
+- वक्फ
+- इनाम
+- पुनर्वसन
+- भूमीधारी
+
+These must be visually present.
+
+Nearby legal context is NOT sufficient.
+
+If visual evidence is weak:
+return "NO"
+
+==================================================
+EXTRACTION TASK
+==================================================
+
 Analyze this Maharashtra 7/12 (Saatbara) document and extract a structured table.
 
-Critical Rules:
+==================================================
+CRITICAL EXTRACTION RULES
+==================================================
 
 1. Extract Marathi text EXACTLY as visually written
 2. Preserve original Marathi spelling
 3. Return EXACTLY one table
 4. Use EXACTLY the provided 31 columns
-5. Do NOT rename/add/remove columns
+5. Do NOT add/remove/rename columns
 6. Each row = ONE unique survey/mutation entry
 7. First 8 columns must contain actual extracted values
 8. Remaining columns must contain ONLY:
@@ -139,28 +185,31 @@ Critical Rules:
    - "NO"
 9. Never leave cells empty
 10. Never duplicate rows
-11. Use contextual Marathi reconstruction for unclear handwriting
-12. If a keyword is visually present even faintly, mark YES
-13. Prioritize recall over omission for handwritten legal keywords
-14. Ignore printed borders/lines/non-text artifacts
-15. Do not hallucinate unrelated values
+11. Ignore decorative lines/borders/non-text artifacts
+12. Never hallucinate unseen values
+13. If uncertain, prefer NO over hallucinated YES
+14. Printed and handwritten text both matter
+15. Side notes and annotations also count
 
------------------------------------
-COLUMN LOGIC
------------------------------------
+==================================================
+COLUMN CLASSIFICATION RULE
+==================================================
 
 For columns:
+
 "सीलिंग" through "वहिवाट"
 
-Rules:
-- Mark "YES" only if the concept/word is visibly present anywhere in the document
-- Handwritten abbreviations or partially visible legal terms count as present
-- Otherwise mark "NO"
-- Never place names/numbers/areas in these columns
+Mark:
+- "YES" ONLY if visually present in any form
+- "NO" otherwise
 
------------------------------------
+Handwritten abbreviations count ONLY if visually recognizable.
+
+Do NOT use contextual assumptions.
+
+==================================================
 31 REQUIRED COLUMNS
------------------------------------
+==================================================
 
 "Date",
 "File Name",
@@ -194,9 +243,9 @@ Rules:
 "तगाई",
 "वहिवाट"
 
------------------------------------
+==================================================
 OUTPUT FORMAT
------------------------------------
+==================================================
 
 Return ONLY valid JSON.
 
@@ -210,7 +259,12 @@ Return ONLY valid JSON.
       ]
     }
   ]
-}`;
+}
+
+No markdown.
+No explanation.
+No commentary.
+No additional text.`;
 }
 
 function normalizeYesNo(value: string): string {
