@@ -41,3 +41,6 @@ server.out
 # Temp
 *.tmp
 *.temp
+
+# Documentation — not for remote
+vertex-ai-backup.md
