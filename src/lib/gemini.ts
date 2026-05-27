@@ -51,6 +51,24 @@ You must visually inspect:
 Treat this as HUMAN-LIKE document reading.
 
 ==================================================
+CRITICAL CORRECTION FOR "भाडेपट्टा" (LEASE) LOCATION
+==================================================
+Previous instructions incorrectly assumed "भाडेपट्टा" would be next to "नजर गहाण". THIS IS WRONG for many document layouts.
+
+In the standard 7/12 format (like the one provided):
+1. "नजर गहाण" (or "नजर गहाणदार") is typically found in the top-right quadrant under "इतर हक्क" (Other Rights).
+2. "भाडेपट्टा" is frequently found in the BOTTOM-LEFT quadrant, specifically under the "कूळ आणि खंड" (Tenant and Rent) column.
+
+TARGETED SEARCH FOR "भाडेपट्टा":
+- Scan the lower half of the document, specifically the columns on the left side (under "वर्ष" and "कूळ आणि खंड").
+- Look for lines starting with the cursive shape of "भाडेपट्टा".
+- It often appears as part of a phrase like "भाडेपट्टा मुदत ३ साल" (Lease period 3 years).
+- VISUAL SIGNATURE: Look for the starting characters "भा" (loop + vertical drop) and "डे" (vertical + sharp diagonal up-left). The "पट्टा" part may be a messy scribble (U-shape + dash).
+- If you see this cursive "भाडे..." shape in the bottom-left tenancy section, YOU MUST MARK "भाडेपट्टा" AS "YES".
+
+Do NOT tie the detection of "भाडेपट्टा" to "नजर गहाण". Search for them independently in their respective sections.
+
+==================================================
 OCR READING STRATEGY
 ==================================================
 
@@ -216,13 +234,13 @@ CRITICAL EXTRACTION RULES
 1. Extract Marathi text EXACTLY as visually written
 2. Preserve original Marathi spelling
 3. Return EXACTLY one table
-4. Use EXACTLY the provided 31 columns
+4. Use EXACTLY the provided 31 columns IN THE EXACT ORDER LISTED BELOW.
 5. Do NOT add/remove/rename columns
 6. Each row = ONE unique survey/mutation entry
-7. First 8 columns must contain actual extracted values
+7. First 8 columns must contain actual extracted values. If a value is missing or unreadable, output "Not Specified".
 8. Remaining columns must contain ONLY:
-   - "YES"
-   - "NO"
+  - "YES"
+  - "NO"
 9. Never leave cells empty
 10. Never duplicate rows
 11. Ignore decorative borders/non-text artifacts
@@ -290,15 +308,15 @@ OUTPUT FORMAT
 Return ONLY valid JSON.
 
 {
-  "tables": [
-    {
-      "headers": [...],
-      "rows": [
-        [...],
-        [...]
-      ]
-    }
-  ]
+ "tables": [
+  {
+   "headers": [...],
+   "rows": [
+    [...],
+    [...]
+   ]
+  }
+ ]
 }
 
 No markdown.
@@ -370,12 +388,12 @@ export async function extractLandRecord(file: File): Promise<{ tables: { headers
 
     let response;
     try {
-      response = await extractWithModel("gemini-2.5-pro", false);
+      response = await extractWithModel("gemini-2.5-flash", false);
     } catch (error: any) {
       const isQuotaError = error.message?.includes("Quota exceeded") || error.status === 429 || error.message?.includes("429");
       if (isQuotaError) {
         console.warn("[AI Extraction] Pro model quota exceeded. Falling back to Flash model...");
-        response = await extractWithModel("gemini-2.5-pro", true);
+        response = await extractWithModel("gemini-2.5-flash", true);
       } else {
         throw error;
       }
